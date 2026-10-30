@@ -17,5 +17,6 @@
       {opacity:1,transform:'translateY(0)',filter:'blur(0)'}
     ],{duration:850,delay:650+i*Math.min(75,1000/letters.length),easing:'cubic-bezier(.16,1,.3,1)',fill:'both'})));
   }
+  if(document.body.dataset.phase==='intro') reveal();
   new MutationObserver(()=>{if(document.body.dataset.phase==='intro')reveal();else{animations.forEach(a=>a.cancel());animations=[];}}).observe(document.body,{attributes:true,attributeFilter:['data-phase']});
 })();

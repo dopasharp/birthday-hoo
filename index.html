@@ -4,23 +4,24 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#15111d"><meta name="description" content="당신을 위한 작고 달콤한 생일 파티. 소원을 빌고 촛불을 불어보세요.">
   <title>Make a wish — 너를 위한 생일</title>
-  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="art-direction.css?v=seated-2">
+  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="art-direction.css?v=atmosphere-1">
 </head>
-<body data-phase="welcome">
+<body data-phase="intro">
 <div class="cake-foreground" aria-hidden="true"></div><div class="flame-stage" aria-hidden="true"></div>
 <div class="art-stage" aria-label="핑크 크림과 체리로 장식한 생일 케이크, 버건디 파티 무대"></div>
 
-  <section class="party-announcement" aria-label="생일 축하 인트로" aria-live="polite">
+  <section class="party-announcement" aria-label="생일 축하 인트로. 두 번 터치하거나 Enter를 눌러 시작" tabindex="0" aria-live="polite">
     <div class="birthday-halo" aria-hidden="true"></div>
     <div class="birthday-orbit orbit-one" aria-hidden="true"></div><div class="birthday-orbit orbit-two" aria-hidden="true"></div>
     <div class="birthday-meta"><span>LITTLE WISHES / A PRIVATE CELEBRATION</span><span>ONE DAY. ALL YOURS.</span></div>
     <div class="birthday-composition">
+      <time class="birthday-date" datetime="2025-12-29">2025.12.29</time>
       <span class="birthday-kicker">THE WORLD IS A LITTLE BRIGHTER WITH YOU IN IT</span>
       <h2 class="birthday-title"><span class="birthday-line">Happy</span><span class="birthday-line birthday-script">Birthday<span class="birthday-asterisk" aria-hidden="true">✳</span></span></h2>
       <div class="birthday-recipient"><span class="recipient-rule"></span><span class="recipient-to">TO</span><b id="birthday-name">홍길동</b><span class="recipient-honorific">님</span><span class="recipient-rule"></span></div>
       <p class="birthday-message">당신이 태어난 오늘을, 온 마음으로 축하해요.</p>
     </div>
-    <div class="birthday-bottom"><span>MADE OF LOVE & A LITTLE MAGIC</span><div class="birthday-countdown"><i></i></div><span>YOUR MOMENT IS ABOUT TO BEGIN ↗</span></div>
+    <div class="birthday-bottom"><span>MADE OF LOVE & A LITTLE MAGIC</span><span class="entry-instruction">화면을 두 번 터치하면, 파티가 시작돼요 ↗</span><span>YOUR MOMENT IS ABOUT TO BEGIN ↗</span></div>
   </section>
   <header><a class="brand" href="./" aria-label="처음으로"><span class="brand-icon">♡</span> little wishes<span class="brand-dot">.</span></a><span class="header-note">YOUR DAY. YOUR MAGIC.</span><button class="sound" id="sound" aria-label="배경 음악 켜기" aria-pressed="false">♫ <span>sound off</span></button></header>
   <main>
@@ -35,12 +36,12 @@
       <div class="side-note right-note">a wish comes true.<br><span>오늘의 소원이 내일의 일상이 되길</span></div>
       <div class="cake-label"><span>♡</span> BAKED WITH LOVE, TOPPED WITH WISHES</div>
     </section>
-  <section class="opening" aria-label="생일 파티 시작"><span class="opening-tag">YOU'RE INVITED TO YOUR OWN PARTY</span><h2><span id="guest">홍길동</span> 님,<br>오늘 좀 <em>신나볼까요?</em></h2><p>당신만을 위한 생일 파티가 준비됐어요.</p><button id="start" class="wish-button">나만의 파티 시작하기 <span>↗</span></button><small>소리를 켜고 즐겨주세요 ♫</small></section>
-    <section class="wish-controls" aria-label="소원 빌기"><p class="step" id="step">생일 축하합니다 ♪</p><div class="song-progress" role="progressbar" aria-label="생일 축하 노래" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div><button class="wish-button" id="blow" disabled><span class="wind">≋</span> <span id="button-text">축하 노래를 듣는 중…</span> <span>✧</span></button><button id="mic" class="mic-button" hidden>마이크로 후— 불기</button><p class="hint" id="hint">노래가 끝나면 소원을 빌어주세요</p><div class="celebration" id="celebration" role="status" aria-live="polite"></div></section>
+    <section class="wish-controls" aria-label="생일 파티 자막"><p class="step" id="step" role="status" aria-live="polite">생일 축하합니다 ♪</p><div class="celebration" id="celebration" role="status"></div><button id="permission-retry" hidden>마이크 권한 허용하기</button></section>
   </main>
   <footer><span>A small cake. A big wish.</span><span>오늘의 주인공은, 너야 <b>♡</b></span><span>MAKE EVERY WISH COUNT</span></footer>
-  <script src="script.js?v=entry-microphone-1"></script>
-  <script type="module" src="candle-stage.js?v=seated-2"></script>
+  <script src="script.js?v=atmosphere-1"></script>
+  <script type="module" src="candle-stage.js?v=double-touch-2"></script>
   <script src="birthday-intro.js"></script>
+  <script src="party-atmosphere.js?v=1"></script>
 </body>
 </html>
