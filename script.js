@@ -2,6 +2,18 @@ const $ = s => document.querySelector(s);
 const guest = new URLSearchParams(location.search).get('name')?.trim().slice(0, 30) || '홍길동';
 $('#guest').textContent = $('#birthday-name').textContent = $('#hero-name').textContent = guest;
 let audio, master, muted = true, phase = 'welcome', stream, frame;
+let micRequest, pageLeaving = false;
+const micOptions = {audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}};
+async function requestMicrophone() {
+  if(stream?.getAudioTracks().some(track=>track.readyState==='live')) return stream;
+  if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) throw new Error('HTTPS 주소로 접속해야 마이크를 사용할 수 있어요.');
+  if(!micRequest) micRequest=navigator.mediaDevices.getUserMedia(micOptions).then(capture=>{
+    if(pageLeaving || phase==='final'){capture.getTracks().forEach(track=>track.stop());return null;}
+    capture.getAudioTracks().forEach(track=>{track.enabled=false;});
+    stream=capture;return capture;
+  }).finally(()=>{micRequest=null;});
+  return micRequest;
+}
 const soundtrack = new window.Audio('assets/birthday-party.wav');
 soundtrack.preload = 'auto';
 function audioSession(type) { try { if(navigator.audioSession) navigator.audioSession.type=type; } catch {} }
@@ -56,7 +68,7 @@ function birthdaySong() {
 }
 function ready(){setPhase('wish');$('#step').textContent='이제 눈을 감고, 소원을 빌어주세요.';$('#blow').disabled=false;$('#button-text').textContent='소원을 빌고, 후—';$('#mic').hidden=false;
   if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){$('#mic').disabled=true;$('#mic').textContent='마이크는 HTTPS 접속이 필요해요';$('#hint').textContent='현재 와이파이 HTTP 주소에서는 마이크가 차단돼요. 후— 버튼은 사용할 수 있어요.';}
-  else $('#hint').textContent='마이크로 직접 불거나, 버튼으로 촛불을 꺼보세요.';
+  else {$('#hint').textContent='마이크로 직접 불거나, 버튼으로 촛불을 꺼보세요.';if(stream?.active) startMic();}
 }
 function stopMic(){cancelAnimationFrame(frame);stream?.getTracks().forEach(track=>track.stop());stream=null;}
 function finish(){if(phase!=='wish')return;stopMic();setPhase('final');document.body.classList.add('blown');$('.candles').setAttribute('aria-label','불이 꺼진 생일 초 5개');$('#mic').hidden=true;$('#step').textContent='소원이 이뤄졌습니다!!';$('#celebration').textContent=`${guest} 님의 새로운 한 해가 반짝이길 ✦`;$('#hint').textContent='생일 축하합니다. 오늘은 온전히 당신의 날이에요.';$('#button-text').textContent='파티 한 번 더!';confetti(140);[523.25,659.25,783.99,1046.5].forEach((f,i)=>note(f,audio.currentTime+i*.13,.8,.1));}
@@ -77,18 +89,31 @@ $('#sound').addEventListener('click',async()=>{
     if(!muted) [523.25,659.25,783.99].forEach((f,i)=>note(f,audio.currentTime+.03+i*.16,.35,.18));
   } catch(error) { $('#sound span').textContent='다시 눌러주세요';$('#sound').setAttribute('title',error.message); }
 });
-$('#mic').addEventListener('click',async()=>{
-  if(phase!=='wish')return;$('#mic').disabled=true;
+async function startMic(){
+  if(phase!=='wish' || $('#mic').disabled)return;$('#mic').disabled=true;
   try{
     if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) throw new Error('HTTPS 주소로 접속해야 마이크를 사용할 수 있어요.');
     audioSession('play-and-record');
     await audio.resume();
-    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const capture=await requestMicrophone();
+    if(!capture)return;
+    capture.getAudioTracks().forEach(track=>{track.enabled=true;});
     if(phase!=='wish'){stopMic();return;}
     const source=audio.createMediaStreamSource(stream), analyser=audio.createAnalyser();analyser.fftSize=1024;source.connect(analyser);const samples=new Float32Array(analyser.fftSize);let baseline=0, calibration=0, sustained=0;
     $('#hint').textContent='잠깐 조용히 기다렸다가…';
     function detect(){if(phase!=='wish')return;analyser.getFloatTimeDomainData(samples);const rms=Math.sqrt(samples.reduce((s,n)=>s+n*n,0)/samples.length);if(calibration<45){baseline+=rms;calibration++;if(calibration===45)$('#hint').textContent='지금 마이크에 후— 불어주세요!';}else{const threshold=Math.max(.045,baseline/45*3);sustained=rms>threshold?sustained+1:Math.max(0,sustained-2);if(sustained>=16){finish();return;}}frame=requestAnimationFrame(detect);}
     detect();later(()=>{if(stream){stopMic();$('#hint').textContent='버튼으로도 촛불을 끌 수 있어요.';$('#mic').disabled=false;}},20000);
   }catch(error){stopMic();$('#mic').disabled=false;$('#hint').textContent=error.name==='NotAllowedError'?'마이크 권한이 거부됐어요. 브라우저 사이트 설정에서 마이크를 허용해주세요.':error.message || '마이크를 사용할 수 없어요. 버튼으로 후— 해주세요.';}
-});
-window.addEventListener('pagehide',()=>{soundtrack.pause();stopMic();timers.forEach(clearTimeout);audio?.close();});
+}
+$('#mic').addEventListener('click',startMic);
+// Ask on entry; keep the track muted until the wish scene starts.
+if(window.isSecureContext && navigator.mediaDevices?.getUserMedia){
+  requestMicrophone().then(capture=>{
+    if(!capture)return;
+    if(phase==='welcome') $('.opening small').textContent='마이크 준비 완료 · 노래가 끝나면 후— 불어주세요';
+    else if(phase==='wish') startMic();
+  }).catch(()=>{
+    if(phase==='welcome') $('.opening small').textContent='소리를 켜고 즐겨주세요 · 버튼으로도 촛불을 끌 수 있어요';
+  });
+}
+window.addEventListener('pagehide',()=>{pageLeaving=true;soundtrack.pause();stopMic();timers.forEach(clearTimeout);audio?.close();});
