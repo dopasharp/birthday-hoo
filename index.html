@@ -4,9 +4,10 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#15111d"><meta name="description" content="당신을 위한 작고 달콤한 생일 파티. 소원을 빌고 촛불을 불어보세요.">
   <title>Make a wish — 너를 위한 생일</title>
-  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="art-direction.css?v=atmosphere-1">
+  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="art-direction.css?v=wish-caption-3">
 </head>
 <body data-phase="intro">
+<div class="wish-blackout" aria-hidden="true"></div>
 <div class="cake-foreground" aria-hidden="true"></div><div class="flame-stage" aria-hidden="true"></div>
 <div class="art-stage" aria-label="핑크 크림과 체리로 장식한 생일 케이크, 버건디 파티 무대"></div>
 
@@ -26,7 +27,6 @@
   <header><a class="brand" href="./" aria-label="처음으로"><span class="brand-icon">♡</span> little wishes<span class="brand-dot">.</span></a><span class="header-note">YOUR DAY. YOUR MAGIC.</span><button class="sound" id="sound" aria-label="배경 음악 켜기" aria-pressed="false">♫ <span>sound off</span></button></header>
   <main>
     <div class="eyebrow"><span></span> TODAY IS ALL ABOUT YOU <span></span></div>
-    <h1>Make a <em>wish</em><span class="title-star">✧</span></h1>
     <p class="intro" id="intro"><span id="hero-name">홍길동</span> 님, 오늘은 당신이 가장 반짝이는 날이에요.</p>
     <div class="journey"><b>01 &nbsp; 축하의 순간</b><i></i><span>02 &nbsp; 소원 빌기</span><i></i><span>03 &nbsp; 마법처럼, 후—</span></div><span class="edition">A ONCE-A-YEAR KIND OF MAGIC · BIRTHDAY EDITION</span><section class="party" aria-label="생일 케이크">
       <span class="float heart heart-one" aria-hidden="true">♥</span><span class="float star star-one" aria-hidden="true">✧</span>
@@ -39,9 +39,9 @@
     <section class="wish-controls" aria-label="생일 파티 자막"><p class="step" id="step" role="status" aria-live="polite">생일 축하합니다 ♪</p><div class="celebration" id="celebration" role="status"></div><button id="permission-retry" hidden>마이크 권한 허용하기</button></section>
   </main>
   <footer><span>A small cake. A big wish.</span><span>오늘의 주인공은, 너야 <b>♡</b></span><span>MAKE EVERY WISH COUNT</span></footer>
-  <script src="script.js?v=atmosphere-1"></script>
+  <script src="script.js?v=wish-caption-3"></script>
   <script type="module" src="candle-stage.js?v=double-touch-2"></script>
   <script src="birthday-intro.js"></script>
-  <script src="party-atmosphere.js?v=1"></script>
+  <script src="party-atmosphere.js?v=finale-2"></script>
 </body>
 </html>
