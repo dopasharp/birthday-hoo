@@ -1,6 +1,19 @@
 const $=s=>document.querySelector(s);
 const guest=new URLSearchParams(location.search).get('name')?.trim().slice(0,30)||'홍길동';
 $('#birthday-name').textContent=$('#hero-name').textContent=guest;
+const dateParam=new URLSearchParams(location.search).get('date');
+if(dateParam){
+ const match=/^(\d{4})[-.](\d{2})[-.](\d{2})$/.exec(dateParam);
+ if(match){
+  const [,year,month,day]=match;
+  const parsed=new Date(`${year}-${month}-${day}T00:00:00Z`);
+  if(Number(year)>0&&!Number.isNaN(parsed.getTime())&&parsed.getUTCFullYear()===Number(year)&&parsed.getUTCMonth()+1===Number(month)&&parsed.getUTCDate()===Number(day)){
+   $('.birthday-date').textContent=`${year}.${month}.${day}`;
+   $('.birthday-date').setAttribute('datetime',`${year}-${month}-${day}`);
+  }
+ }
+}
+
 let phase='intro',audio,stream,micRequest,frame,leaving=false,starting=false,detecting=false,blows=0;
 const soundtrack=new Audio('assets/birthday-party.wav');soundtrack.preload='auto';
 const timers=new Set();
@@ -60,43 +73,38 @@ function startLyrics(){
  function sync(){if(phase!=='song')return;const text=lyricText(soundtrack.currentTime);if(text!==previous){subtitle(text);previous=text;}lyricFrame=requestAnimationFrame(sync);}
  sync();
 }
-// A short stereo crowd clap, with staggered hands and soft room reflections.
-let applauseGain,applauseSource;
-function playApplause(){
- if(!audio||audio.state!=='running')return;
- const rate=audio.sampleRate,duration=1.35;
- const buffer=audio.createBuffer(2,Math.ceil(rate*duration),rate);
- const channels=[buffer.getChannelData(0),buffer.getChannelData(1)];
- for(let person=0;person<9;person++){
-  const pan=Math.random(),spacing=.22+Math.random()*.12;
-  for(let at=.015+Math.random()*.14;at<.97;at+=spacing){
-   const start=Math.floor(at*rate),length=Math.floor((.055+Math.random()*.035)*rate),volume=.15+Math.random()*.12;
-   let previous=0;
-   for(let j=0;j<length;j++){
-    const noise=Math.random()*2-1,sharp=noise-previous*.7;previous=noise;
-    const envelope=(1-Math.exp(-j/(rate*.0006)))*Math.exp(-j/(rate*.011));
-    const sample=sharp*envelope*volume;
-    for(let c=0;c<2;c++){
-     const v=sample*(c===0?Math.sqrt(1-pan):Math.sqrt(pan));
-     if(start+j<buffer.length)channels[c][start+j]+=v;
-     for(const [delay,decay] of [[.027,.25],[.061,.13],[.103,.065]]){const k=start+j+Math.floor(delay*rate);if(k<buffer.length)channels[c][k]+=v*decay;}
-    }
-   }
-  }
- }
- let peak=0;for(const channel of channels)for(const value of channel)peak=Math.max(peak,Math.abs(value));
- if(peak>.7)for(const channel of channels)for(let i=0;i<channel.length;i++)channel[i]*=.7/peak;
- applauseSource=audio.createBufferSource();applauseSource.buffer=buffer;
- applauseGain=audio.createGain();applauseGain.gain.value=soundtrack.muted?0:.8;
- applauseSource.connect(applauseGain);applauseGain.connect(audio.destination);
- applauseSource.onended=()=>{applauseSource.disconnect();applauseGain.disconnect();applauseSource=null;applauseGain=null;};
- applauseSource.start();
+// Real audience recording, preloaded locally; a six-second excerpt with a soft tail.
+let applauseGain,applauseSource,applauseBuffer;
+const applauseData=fetch('assets/applause-crowd.mp3',{signal:AbortSignal.timeout(8000)})
+ .then(response=>{if(!response.ok)throw new Error('Applause unavailable');return response.arrayBuffer();}).catch(()=>null);
+async function loadApplause(){
+ if(applauseBuffer)return applauseBuffer;
+ const data=await applauseData;if(!data||!audio||leaving)return null;
+ try{applauseBuffer=await audio.decodeAudioData(data.slice(0));return applauseBuffer;}catch{return null;}
 }
-function ready(){if(phase!=='song')return;playApplause();setPhase('wish');cancelAnimationFrame(lyricFrame);document.body.classList.add('wish-preamble');subtitle('소원을 빌고');later(()=>{if(phase!=='wish')return;document.body.classList.remove('wish-preamble');subtitle('후~');startMic();},1500);}
+async function playApplause(){
+ const buffer=await loadApplause();if(!buffer||!audio||audio.state!=='running'||leaving)return;
+ const source=audio.createBufferSource(),volume=audio.createGain(),envelope=audio.createGain();
+ const offset=1,duration=Math.min(6,buffer.duration-offset);if(duration<=0)return;
+ source.buffer=buffer;applauseSource=source;applauseGain=volume;
+ volume.gain.value=soundtrack.muted?0:.8;
+ const now=audio.currentTime;envelope.gain.setValueAtTime(0,now);
+ envelope.gain.linearRampToValueAtTime(1,now+.18);
+ envelope.gain.setValueAtTime(1,now+duration-1.3);
+ envelope.gain.linearRampToValueAtTime(0,now+duration);
+ source.connect(envelope);envelope.connect(volume);volume.connect(audio.destination);
+ await new Promise(resolve=>{source.onended=()=>{source.disconnect();envelope.disconnect();volume.disconnect();applauseSource=null;applauseGain=null;resolve();};source.start(now,offset,duration);});
+}
+async function ready(){
+ if(phase!=='song')return;setPhase('wish');cancelAnimationFrame(lyricFrame);
+ document.body.classList.add('wish-preamble');subtitle('');
+ await playApplause();if(leaving||phase!=='wish')return;
+ subtitle('소원을 빌고');later(()=>{if(phase!=='wish')return;document.body.classList.remove('wish-preamble');subtitle('후~');startMic();},1500);
+}
 soundtrack.addEventListener('ended',ready);
 soundtrack.addEventListener('error',()=>{if(phase==='song'){subtitle('음악을 불러오지 못했어요. 화면을 새로고침해주세요.');}});
 async function begin(){if(phase!=='intro'||starting)return;starting=true;
- try{session('playback');const Context=window.AudioContext||window.webkitAudioContext;if(!Context)throw new Error('Safari나 Chrome에서 다시 열어주세요.');audio??=new Context();soundtrack.currentTime=0;await Promise.all([audio.resume(),soundtrack.play()]);setPhase('song');$('#sound span').textContent='sound on';$('#sound').setAttribute('aria-pressed','true');startLyrics();}
+ try{session('playback');const Context=window.AudioContext||window.webkitAudioContext;if(!Context)throw new Error('Safari나 Chrome에서 다시 열어주세요.');audio??=new Context();void loadApplause();soundtrack.currentTime=0;await Promise.all([audio.resume(),soundtrack.play()]);setPhase('song');$('#sound span').textContent='sound on';$('#sound').setAttribute('aria-pressed','true');startLyrics();}
  catch(e){$('.entry-instruction').textContent='소리를 재생하려면 화면을 다시 두 번 터치해주세요';}finally{starting=false;}}
 const entry=$('.party-announcement');let lastTap=0;
 entry.addEventListener('pointerup',e=>{if(e.button!==0||!e.isPrimary)return;const now=performance.now();if(lastTap&&now-lastTap<380){lastTap=0;begin();}else lastTap=now;});
