@@ -73,7 +73,7 @@ function startLyrics(){
  function sync(){if(phase!=='song')return;const text=lyricText(soundtrack.currentTime);if(text!==previous){subtitle(text);previous=text;}lyricFrame=requestAnimationFrame(sync);}
  sync();
 }
-// Real audience recording, preloaded locally; a six-second excerpt with a soft tail.
+// Real audience recording, preloaded locally; a four-second excerpt with a soft tail.
 let applauseGain,applauseSource,applauseBuffer;
 const applauseData=fetch('assets/applause-crowd.mp3',{signal:AbortSignal.timeout(8000)})
  .then(response=>{if(!response.ok)throw new Error('Applause unavailable');return response.arrayBuffer();}).catch(()=>null);
@@ -85,7 +85,7 @@ async function loadApplause(){
 async function playApplause(){
  const buffer=await loadApplause();if(!buffer||!audio||audio.state!=='running'||leaving)return;
  const source=audio.createBufferSource(),volume=audio.createGain(),envelope=audio.createGain();
- const offset=1,duration=Math.min(6,buffer.duration-offset);if(duration<=0)return;
+ const offset=1,duration=Math.min(4,buffer.duration-offset);if(duration<=0)return;
  source.buffer=buffer;applauseSource=source;applauseGain=volume;
  volume.gain.value=soundtrack.muted?0:.8;
  const now=audio.currentTime;envelope.gain.setValueAtTime(0,now);
@@ -99,7 +99,7 @@ async function ready(){
  if(phase!=='song')return;setPhase('wish');cancelAnimationFrame(lyricFrame);
  document.body.classList.add('wish-preamble');subtitle('');
  await playApplause();if(leaving||phase!=='wish')return;
- subtitle('소원을 빌고');later(()=>{if(phase!=='wish')return;document.body.classList.remove('wish-preamble');subtitle('후~');startMic();},1500);
+ subtitle('소원을 빌고');later(()=>{if(phase!=='wish')return;document.body.classList.remove('wish-preamble');subtitle('후~');startMic();},3500);
 }
 soundtrack.addEventListener('ended',ready);
 soundtrack.addEventListener('error',()=>{if(phase==='song'){subtitle('음악을 불러오지 못했어요. 화면을 새로고침해주세요.');}});
