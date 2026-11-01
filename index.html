@@ -1,10 +1,17 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#15111d"><meta name="description" content="당신을 위한 작고 달콤한 생일 파티. 소원을 빌고 촛불을 불어보세요.">
-  <title>Make a wish — 너를 위한 생일</title>
-  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="art-direction.css?v=three-blows-5">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B0E0D"><meta name="description" content="당신을 위한 작고 달콤한 생일 파티. 소원을 빌고 촛불을 불어보세요.">
+  <title>Make a wish — 너를 위한 생일 | DOPA#</title>
+  <meta name="dopasharp:game" content="birthday-hoo"><link rel="canonical" href="https://dopasharp.github.io/birthday-hoo/">
+  <meta property="og:type" content="website"><meta property="og:site_name" content="DOPASHARP">
+  <meta property="og:title" content="Happy Birthday 🎂 너를 위한 생일 파티"><meta property="og:description" content="생일 축하 노래를 듣고, 소원을 빌고, 진짜로 후~ 불어서 촛불을 꺼보세요.">
+  <meta property="og:url" content="https://dopasharp.github.io/birthday-hoo/"><meta property="og:image" content="https://dopasharp.github.io/birthday-hoo/og/birthday.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image"><link rel="icon" href="dopasharp/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="dopasharp/tokens.css"><link rel="stylesheet" href="dopasharp/components.css"><script src="dopasharp/dopasharp.js" defer></script>
+  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="art-direction.css?v=three-blows-5"><link rel="stylesheet" href="dopasharp-frame.css">
 </head>
 <body data-phase="intro">
 <div class="wish-blackout" aria-hidden="true"></div>
@@ -14,7 +21,7 @@
   <section class="party-announcement" aria-label="생일 축하 인트로. 두 번 터치하거나 Enter를 눌러 시작" tabindex="0" aria-live="polite">
     <div class="birthday-halo" aria-hidden="true"></div>
     <div class="birthday-orbit orbit-one" aria-hidden="true"></div><div class="birthday-orbit orbit-two" aria-hidden="true"></div>
-    <div class="birthday-meta"><span>LITTLE WISHES / A PRIVATE CELEBRATION</span><span>ONE DAY. ALL YOURS.</span></div>
+    <div class="birthday-meta"><span>DOPA# 004 / BIRTHDAY · A PRIVATE CELEBRATION</span><span>ONE DAY. ALL YOURS.</span></div>
     <div class="birthday-composition">
       <time class="birthday-date" datetime="2025-12-29">2025.12.29</time>
       <span class="birthday-kicker">THE WORLD IS A LITTLE BRIGHTER WITH YOU IN IT</span>
@@ -24,7 +31,7 @@
     </div>
     <div class="birthday-bottom"><span>MADE OF LOVE & A LITTLE MAGIC</span><span class="entry-instruction">화면을 두 번 터치하면, 파티가 시작돼요 ↗</span><span>YOUR MOMENT IS ABOUT TO BEGIN ↗</span></div>
   </section>
-  <header><a class="brand" href="./" aria-label="처음으로"><span class="brand-icon">♡</span> little wishes<span class="brand-dot">.</span></a><span class="header-note">YOUR DAY. YOUR MAGIC.</span><button class="sound" id="sound" aria-label="배경 음악 켜기" aria-pressed="false">♫ <span>sound off</span></button></header>
+  <header><div class="birthday-brand" data-dopa="header"></div><span class="header-note">YOUR DAY. YOUR MAGIC.</span><button class="sound" id="sound" aria-label="배경 음악 켜기" aria-pressed="false">♫ <span>sound off</span></button></header>
   <main>
     <div class="eyebrow"><span></span> TODAY IS ALL ABOUT YOU <span></span></div>
     <p class="intro" id="intro"><span id="hero-name">홍길동</span> 님, 오늘은 당신이 가장 반짝이는 날이에요.</p>
@@ -38,8 +45,16 @@
     </section>
     <section class="wish-controls" aria-label="생일 파티 자막"><p class="step" id="step" role="status" aria-live="polite">생일 축하합니다 ♪</p><div class="celebration" id="celebration" role="status"></div><button id="permission-retry" hidden>마이크 권한 허용하기</button></section>
   </main>
-  <footer><span>A small cake. A big wish.</span><span>오늘의 주인공은, 너야 <b>♡</b></span><span>MAKE EVERY WISH COUNT</span></footer>
-  <script src="script.js?v=applause-timing-9"></script>
+  <footer><span>A small cake. A big wish.</span><span>오늘의 주인공은, 너야 <b>♡</b></span><span>MADE BY DOPA#</span></footer>
+  <section class="birthday-finale" id="finale" aria-label="생일 축하 보내기" hidden>
+    <form class="finale-send" id="finale-send" autocomplete="off">
+      <label for="friend-name" class="dopa-label">친구에게도 생일 축하를</label>
+      <div class="finale-row"><input id="friend-name" maxlength="30" placeholder="친구 이름" enterkeyhint="send"><button class="dopa-button finale-pink" type="submit">🎂 축하 보내기</button></div>
+    </form>
+    <div class="finale-actions"><button class="dopa-button dopa-button--secondary" type="button" id="finale-again">처음부터 다시</button><button class="dopa-button dopa-button--tertiary" type="button" data-dopa-more>다른 DOPA# 게임</button></div>
+    <div class="dopa-footer"><span>MADE BY DOPA#</span></div>
+  </section>
+  <script src="script.js?v=dopasharp-1"></script>
   <script type="module" src="candle-stage.js?v=double-touch-2"></script>
   <script src="birthday-intro.js"></script>
   <script src="party-atmosphere.js?v=finale-2"></script>

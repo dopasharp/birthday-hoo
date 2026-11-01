@@ -35,7 +35,7 @@ function blow(){
  if(blows<=2){document.body.classList.add('flaring');window.dispatchEvent(new Event('candle-flare'));subtitle('후~');later(()=>document.body.classList.remove('flaring'),1800);}
  else finish();
 }
-function finish(){stopMic();setPhase('final');document.body.classList.remove('flaring');document.body.classList.add('blown');subtitle('소원이 이뤄집니다~~');$('#celebration').textContent=`${guest} 님의 모든 날이 오늘처럼 빛나길`;$('#permission-retry').hidden=true;}
+function finish(){stopMic();setPhase('final');window.DopaSharp?.track('game_complete',{blows});later(()=>{$('#finale').hidden=false;},4200);document.body.classList.remove('flaring');document.body.classList.add('blown');subtitle('소원이 이뤄집니다~~');$('#celebration').textContent=`${guest} 님의 모든 날이 오늘처럼 빛나길`;$('#permission-retry').hidden=true;}
 async function startMic(){
  if(phase!=='wish'||detecting||document.body.classList.contains('wish-preamble'))return;detecting=true;
  try{
@@ -104,7 +104,7 @@ async function ready(){
 soundtrack.addEventListener('ended',ready);
 soundtrack.addEventListener('error',()=>{if(phase==='song'){subtitle('음악을 불러오지 못했어요. 화면을 새로고침해주세요.');}});
 async function begin(){if(phase!=='intro'||starting)return;starting=true;
- try{session('playback');const Context=window.AudioContext||window.webkitAudioContext;if(!Context)throw new Error('Safari나 Chrome에서 다시 열어주세요.');audio??=new Context();void loadApplause();soundtrack.currentTime=0;await Promise.all([audio.resume(),soundtrack.play()]);setPhase('song');$('#sound span').textContent='sound on';$('#sound').setAttribute('aria-pressed','true');startLyrics();}
+ try{session('playback');const Context=window.AudioContext||window.webkitAudioContext;if(!Context)throw new Error('Safari나 Chrome에서 다시 열어주세요.');audio??=new Context();void loadApplause();soundtrack.currentTime=0;await Promise.all([audio.resume(),soundtrack.play()]);setPhase('song');window.DopaSharp?.track('game_start');$('#sound span').textContent='sound on';$('#sound').setAttribute('aria-pressed','true');startLyrics();}
  catch(e){$('.entry-instruction').textContent='소리를 재생하려면 화면을 다시 두 번 터치해주세요';}finally{starting=false;}}
 const entry=$('.party-announcement');let lastTap=0;
 entry.addEventListener('pointerup',e=>{if(e.button!==0||!e.isPrimary)return;const now=performance.now();if(lastTap&&now-lastTap<380){lastTap=0;begin();}else lastTap=now;});
@@ -112,5 +112,11 @@ entry.addEventListener('dblclick',begin);
 entry.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();begin();}});
 $('#sound').addEventListener('click',()=>{soundtrack.muted=!soundtrack.muted;if(applauseGain)applauseGain.gain.setTargetAtTime(soundtrack.muted?0:.8,audio.currentTime,.025);$('#sound span').textContent=soundtrack.muted?'sound off':'sound on';$('#sound').setAttribute('aria-pressed',String(!soundtrack.muted));});
 $('#permission-retry').addEventListener('click',startMic);
+// Finale: send the same party to a friend with ?name=, or start over.
+$('#finale-send').addEventListener('submit',e=>{e.preventDefault();const input=$('#friend-name'),name=input.value.trim().slice(0,30);if(!name){input.focus();return;}
+ const url=new URL(location.pathname,location.origin);url.searchParams.set('name',name);
+ window.DopaSharp?.track('share_click',{method:'birthday_link'});
+ window.DopaSharp?.share({title:`${name} 님, 생일 축하해요 🎂`,text:`🎂 ${name} 님을 위한 생일 파티가 준비됐어요. 소원 빌고 촛불을 불어주세요!`,url:url.href},`${name} 님을 위한 축하 링크를 복사했어요.`);});
+$('#finale-again').addEventListener('click',()=>{window.DopaSharp?.track('game_retry');location.reload();});
 if(isSecureContext&&navigator.mediaDevices?.getUserMedia)requestMicrophone().then(capture=>{if(capture&&phase==='wish')startMic();}).catch(()=>{});
 window.addEventListener('pagehide',()=>{leaving=true;cancelAnimationFrame(lyricFrame);soundtrack.pause();applauseSource?.stop();stopMic();timers.forEach(clearTimeout);audio?.close();});

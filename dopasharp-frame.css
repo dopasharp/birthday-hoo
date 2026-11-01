@@ -1,0 +1,20 @@
+/* DOPA# frame on top of the birthday art direction: the plum stage and pink stay, the D# mark and the finale actions come from the shared kit. */
+header .birthday-brand{min-height:0;gap:var(--space-4)}
+header .birthday-brand [data-dopa-more]{display:none}
+header .birthday-brand .dopa-label{color:#fae3bd}
+.party-announcement:focus-visible,.sound:focus-visible{outline:3px solid var(--color-text);outline-offset:-8px}
+
+.birthday-finale{position:fixed;left:0;right:0;bottom:0;z-index:12;display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-3);width:min(100%,480px);margin:0 auto;padding:var(--space-4) 20px 0;font-family:var(--font-body);color:var(--color-text);animation:dopa-up var(--duration-slow) var(--ease-standard)}
+.birthday-finale[hidden]{display:none}
+.finale-send{display:grid;gap:var(--space-2)}
+.finale-send .dopa-label{color:#ffc5d6;text-align:center}
+.finale-row{display:flex;gap:var(--space-2)}
+.finale-row input{flex:1;width:0;min-width:0;min-height:var(--button-height);padding:0 16px;border:1px solid #ffffff30;border-radius:var(--radius-md);background:#ffffff10;color:var(--color-text);font:500 16px var(--font-body);-webkit-user-select:text;user-select:text}
+.finale-row input::placeholder{color:#d8b9ab}
+.finale-row input:focus-visible{outline:3px solid var(--color-pink);outline-offset:2px}
+.finale-pink{background:var(--color-pink);color:#2a0b16;padding:12px 18px;white-space:nowrap}
+.finale-pink:hover{background:#ff86a6}
+.finale-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--space-2)}
+.finale-actions .dopa-button--secondary{border-color:#ffffff30}
+.birthday-finale .dopa-footer{padding-top:var(--space-2)}
+@media (prefers-reduced-motion:reduce){.birthday-finale{animation:none}}
