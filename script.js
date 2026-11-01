@@ -1,5 +1,7 @@
 const $=s=>document.querySelector(s);
 const guest=new URLSearchParams(location.search).get('name')?.trim().slice(0,30)||'홍길동';
+// Without ?name= the page is for the sender: make the party link first, the party itself plays for the birthday person.
+const needsSetup=!new URLSearchParams(location.search).get('name')?.trim();
 $('#birthday-name').textContent=$('#hero-name').textContent=guest;
 const dateParam=new URLSearchParams(location.search).get('date');
 if(dateParam){
@@ -35,7 +37,26 @@ function blow(){
  if(blows<=2){document.body.classList.add('flaring');window.dispatchEvent(new Event('candle-flare'));subtitle('후~');later(()=>document.body.classList.remove('flaring'),1800);}
  else finish();
 }
-function finish(){stopMic();setPhase('final');window.DopaSharp?.track('game_complete',{blows});later(()=>{$('#finale').hidden=false;},4200);document.body.classList.remove('flaring');document.body.classList.add('blown');subtitle('소원이 이뤄집니다~~');$('#celebration').textContent=`${guest} 님의 모든 날이 오늘처럼 빛나길`;$('#permission-retry').hidden=true;}
+// A soft, shimmering chord for the wish coming true: a slow pad, a rising sparkle with echoes, and an airy swell.
+function mysticChime(){
+ if(!audio||audio.state!=='running'||soundtrack.muted||leaving)return;
+ const now=audio.currentTime,out=audio.createGain(),echo=audio.createDelay(1),feedback=audio.createGain(),wet=audio.createGain();
+ out.gain.value=.55;echo.delayTime.value=.32;feedback.gain.value=.42;wet.gain.value=.5;
+ out.connect(audio.destination);echo.connect(feedback);feedback.connect(echo);echo.connect(wet);wet.connect(audio.destination);
+ const voice=(freq,start,dur,type,peak,attack)=>{const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(0,now+start);g.gain.linearRampToValueAtTime(peak,now+start+attack);g.gain.exponentialRampToValueAtTime(.0001,now+start+dur);
+  o.connect(g);g.connect(out);g.connect(echo);o.start(now+start);o.stop(now+start+dur+.05);};
+ [261.63,329.63,392,493.88].forEach((f,i)=>{voice(f,0,5.2,'sine',.05,1.4);voice(f*1.004,0,5.2,'sine',.035,1.6);});
+ [1046.5,1318.5,1568,1975.5,2093,2637,3136].forEach((f,i)=>voice(f,.35+i*.16,1.8,'triangle',.06,.01));
+ [2093,2637,3136,3951].forEach((f,i)=>voice(f,1.9+i*.11,1.4,'sine',.04,.01));
+ const noise=audio.createBuffer(1,audio.sampleRate*3,audio.sampleRate),data=noise.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
+ const air=audio.createBufferSource(),band=audio.createBiquadFilter(),airGain=audio.createGain();air.buffer=noise;band.type='bandpass';band.Q.value=6;
+ band.frequency.setValueAtTime(500,now);band.frequency.exponentialRampToValueAtTime(5000,now+2.6);
+ airGain.gain.setValueAtTime(0,now);airGain.gain.linearRampToValueAtTime(.05,now+1.2);airGain.gain.linearRampToValueAtTime(0,now+3);
+ air.connect(band);band.connect(airGain);airGain.connect(out);air.start(now);air.stop(now+3);
+ later(()=>{feedback.gain.value=0;out.disconnect();wet.disconnect();},8000);
+}
+function finish(){stopMic();setPhase('final');mysticChime();window.DopaSharp?.track('game_complete',{blows});later(()=>{$('#finale').hidden=false;},4200);document.body.classList.remove('flaring');document.body.classList.add('blown');subtitle('소원이 이뤄집니다~~');$('#celebration').textContent=`${guest} 님의 모든 날이 오늘처럼 빛나길`;$('#permission-retry').hidden=true;}
 async function startMic(){
  if(phase!=='wish'||detecting||document.body.classList.contains('wish-preamble'))return;detecting=true;
  try{
@@ -103,7 +124,7 @@ async function ready(){
 }
 soundtrack.addEventListener('ended',ready);
 soundtrack.addEventListener('error',()=>{if(phase==='song'){subtitle('음악을 불러오지 못했어요. 화면을 새로고침해주세요.');}});
-async function begin(){if(phase!=='intro'||starting)return;starting=true;
+async function begin(){if(phase!=='intro'||starting||needsSetup)return;starting=true;
  try{session('playback');const Context=window.AudioContext||window.webkitAudioContext;if(!Context)throw new Error('Safari나 Chrome에서 다시 열어주세요.');audio??=new Context();void loadApplause();soundtrack.currentTime=0;await Promise.all([audio.resume(),soundtrack.play()]);setPhase('song');window.DopaSharp?.track('game_start');$('#sound span').textContent='sound on';$('#sound').setAttribute('aria-pressed','true');startLyrics();}
  catch(e){$('.entry-instruction').textContent='소리를 재생하려면 화면을 다시 두 번 터치해주세요';}finally{starting=false;}}
 const entry=$('.party-announcement');let lastTap=0;
@@ -112,11 +133,39 @@ entry.addEventListener('dblclick',begin);
 entry.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();begin();}});
 $('#sound').addEventListener('click',()=>{soundtrack.muted=!soundtrack.muted;if(applauseGain)applauseGain.gain.setTargetAtTime(soundtrack.muted?0:.8,audio.currentTime,.025);$('#sound span').textContent=soundtrack.muted?'sound off':'sound on';$('#sound').setAttribute('aria-pressed',String(!soundtrack.muted));});
 $('#permission-retry').addEventListener('click',startMic);
-// Finale: send the same party to a friend with ?name=, or start over.
-$('#finale-send').addEventListener('submit',e=>{e.preventDefault();const input=$('#friend-name'),name=input.value.trim().slice(0,30);if(!name){input.focus();return;}
- const url=new URL(location.pathname,location.origin);url.searchParams.set('name',name);
- window.DopaSharp?.track('share_click',{method:'birthday_link'});
- window.DopaSharp?.share({title:`${name} 님, 생일 축하해요 🎂`,text:`🎂 ${name} 님을 위한 생일 파티가 준비됐어요. 소원 빌고 촛불을 불어주세요!`,url:url.href},`${name} 님을 위한 축하 링크를 복사했어요.`);});
+// Finale: make a party for a friend (the setup page), or start over.
+$('#finale-make').addEventListener('click',()=>window.DopaSharp?.track('share_click',{method:'make_party'}));
 $('#finale-again').addEventListener('click',()=>{window.DopaSharp?.track('game_retry');location.reload();});
-if(isSecureContext&&navigator.mediaDevices?.getUserMedia)requestMicrophone().then(capture=>{if(capture&&phase==='wish')startMic();}).catch(()=>{});
+// Setup: name and date first, then a popup with the copied party link.
+let partyLink='',partyName='';
+const copyLink=()=>navigator.clipboard?.writeText(partyLink).then(()=>true,()=>false)??Promise.resolve(false);
+function selectLink(){const range=document.createRange();range.selectNodeContents($('#setup-link'));const sel=getSelection();sel.removeAllRanges();sel.addRange(range);}
+function closeDialog(){$('#setup-dialog').hidden=true;$('#setup-name').focus();}
+if(needsSetup){
+ document.body.classList.add('setting-up');$('#setup').hidden=false;entry.inert=true;
+ const d=new Date();$('#setup-date').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+$('#setup-form').addEventListener('submit',async e=>{e.preventDefault();
+ const name=$('#setup-name').value.trim().slice(0,30),date=$('#setup-date').value;
+ if(!name){$('#setup-error').textContent='생일 주인공의 이름을 입력해주세요.';$('#setup-name').focus();return;}
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){$('#setup-error').textContent='생일 날짜를 입력해주세요.';$('#setup-date').focus();return;}
+ $('#setup-error').textContent='';
+ const url=new URL(location.pathname,location.origin);url.searchParams.set('name',name);url.searchParams.set('date',date);
+ partyLink=url.href;partyName=name;$('#setup-link').textContent=partyLink;$('#setup-preview').href=partyLink;
+ const copied=await copyLink();
+ $('#dialog-title').textContent=copied?'링크를 복사했어요!':'링크가 만들어졌어요!';
+ $('#setup-copy').textContent=copied?'다시 복사하기':'링크 복사하기';
+ $('#setup-share').hidden=!navigator.share;
+ $('#setup-dialog').hidden=false;$('#setup-copy').focus();
+ window.DopaSharp?.track('game_start',{role:'sender'});if(copied)window.DopaSharp?.track('share_click',{method:'setup_copy'});
+});
+$('#setup-copy').addEventListener('click',async()=>{
+ if(await copyLink()){$('#dialog-title').textContent='링크를 복사했어요!';$('#setup-copy').textContent='다시 복사하기';window.DopaSharp?.toast('링크를 복사했어요. 생일 주인공에게 보내주세요!');window.DopaSharp?.track('share_click',{method:'setup_copy'});}
+ else{selectLink();window.DopaSharp?.toast('링크를 길게 눌러 복사해주세요.');}
+});
+$('#setup-share').addEventListener('click',async()=>{window.DopaSharp?.track('share_click',{method:'setup_share'});
+ try{await navigator.share({title:`${partyName} 님, 생일 축하해요 🎂`,text:`🎂 ${partyName} 님을 위한 생일 파티가 준비됐어요. 🔊 소리를 키우고 열어서, 소원 빌고 촛불을 불어주세요!`,url:partyLink});}catch{}});
+$('#setup-edit').addEventListener('click',closeDialog);
+$('#setup-dialog').addEventListener('keydown',e=>{if(e.key==='Escape')closeDialog();});
+if(!needsSetup&&isSecureContext&&navigator.mediaDevices?.getUserMedia)requestMicrophone().then(capture=>{if(capture&&phase==='wish')startMic();}).catch(()=>{});
 window.addEventListener('pagehide',()=>{leaving=true;cancelAnimationFrame(lyricFrame);soundtrack.pause();applauseSource?.stop();stopMic();timers.forEach(clearTimeout);audio?.close();});
